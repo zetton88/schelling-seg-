@@ -28,9 +28,9 @@ function schelling_step!(agent, model)
 end
 
 function initialize(; n_agents = 3000, gridsize = (60, 60),
-                      min_to_be_happy = 3, seed = 41)
+                      min_to_be_happy = 3, seed = 41, n_groups = 3)
     space = GridSpaceSingle(gridsize; periodic = true)
-    properties = Dict(:min_to_be_happy => min_to_be_happy)
+    properties = Dict(:min_to_be_happy => min_to_be_happy, :n_groups => n_groups)
     rng = Random.Xoshiro(seed)
     model = StandardABM(
         SchellingAgent, space;
@@ -40,7 +40,7 @@ function initialize(; n_agents = 3000, gridsize = (60, 60),
         scheduler = Schedulers.Randomly(),  # asynchronous, random order each step
     )
     for n in 1:n_agents
-        add_agent_single!(SchellingAgent, model; group = isodd(n) ? 1 : 2)
+        add_agent_single!(SchellingAgent, model; group = n % n_groups + 1)
     end
     return model
 end
@@ -87,6 +87,8 @@ function grid_matrix(model)
     return M
 end
 
+const GROUP_COLORS = [:white, :royalblue, :orange, :seagreen, :crimson, :purple, :gold]
+
 function watch(; steps = 300, delay = 0.05, kwargs...)
     model = initialize(; kwargs...)
     M = Observable(grid_matrix(model))
@@ -94,7 +96,7 @@ function watch(; steps = 300, delay = 0.05, kwargs...)
     fig = Figure()
     ax = Axis(fig[1, 1]; title = title, aspect = DataAspect())
     hidedecorations!(ax)
-    heatmap!(ax, M; colormap = [:white, :royalblue, :orange], colorrange = (0, 2))
+    heatmap!(ax, M; colormap = GROUP_COLORS[1:model.n_groups+1], colorrange = (0, model.n_groups + 1))
     screen = display(fig)
     for t in 1:steps
         step!(model, 1)
@@ -109,4 +111,4 @@ end
 
 # Runs automatically whenever the file is run. Edit the arguments to taste,
 # or comment this line out if you only want the functions loaded.
-watch(steps = 100, min_to_be_happy = 5)
+watch(steps = 100, min_to_be_happy = 4, gridsize = (100, 100), n_agents = 9000, seed = 51,  n_groups = 4)
