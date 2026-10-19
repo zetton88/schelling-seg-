@@ -1,1 +1,1 @@
-Implementation of the Schelling segregation model. 
+Implementation of the Schelling segregation model in Julia. 
